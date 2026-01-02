@@ -50,6 +50,12 @@ void RpcProvider::Run(int nodeIndex, short port) {
     ipC = inet_ntoa(*(struct in_addr *)(hent->h_addr_list[i]));  // IP地址
   }
   std::string ip = std::string(ipC);
+  Run(nodeIndex, port, ip);
+}
+
+// 启动rpc服务节点，指定IP
+void RpcProvider::Run(int nodeIndex, short port, const std::string &ip) {
+  std::string ip_to_use = ip;
   //    // 获取端口
   //    if(getReleasePort(port)) //在port的基础上获取一个可用的port，不知道为何没有效果
   //    {
@@ -67,12 +73,12 @@ void RpcProvider::Run(int nodeIndex, short port) {
     std::cout << "打开文件失败！" << std::endl;
     exit(EXIT_FAILURE);
   }
-  outfile << node + "ip=" + ip << std::endl;
+  outfile << node + "ip=" + ip_to_use << std::endl;
   outfile << node + "port=" + std::to_string(port) << std::endl;
   outfile.close();
 
   //创建服务器
-  muduo::net::InetAddress address(ip, port);
+  muduo::net::InetAddress address(ip_to_use, port);
 
   // 创建TcpServer对象
   m_muduo_server = std::make_shared<muduo::net::TcpServer>(&m_eventLoop, address, "RpcProvider");
@@ -91,7 +97,7 @@ void RpcProvider::Run(int nodeIndex, short port) {
   m_muduo_server->setThreadNum(4);
 
   // rpc服务端准备启动，打印信息
-  std::cout << "RpcProvider start service at ip:" << ip << " port:" << port << std::endl;
+  std::cout << "RpcProvider start service at ip:" << ip_to_use << " port:" << port << std::endl;
 
   // 启动网络服务
   m_muduo_server->start();
