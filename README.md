@@ -2,7 +2,7 @@
 ```
 mkdir cmake-build-debug
 cd cmake-build-debug
-cmake ..
+cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 make
 ```
 
