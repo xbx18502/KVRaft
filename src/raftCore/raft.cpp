@@ -216,7 +216,7 @@ void Raft::doElection() {
     m_currentTerm += 1;
     m_votedFor = m_me;  //即是自己给自己投，也避免candidate给同辈的candidate投
     persist();
-    std::shared_ptr<int> votedNum = std::make_shared<int>(1);  // 使用 make_shared 函数初始化 !! 亮点
+    std::shared_ptr<std::atomic<int>> votedNum = std::make_shared<std::atomic<int>>(1);  // 使用 make_shared 函数初始化 !! 亮点
     //	重新设置定时器
     m_lastResetElectionTime = now();
     //	发布RequestVote RPC
@@ -759,7 +759,7 @@ int Raft::getSlicesIndexFromLogIndex(int logIndex) {
 }
 
 bool Raft::sendRequestVote(int server, std::shared_ptr<raftRpcProctoc::RequestVoteArgs> args,
-                           std::shared_ptr<raftRpcProctoc::RequestVoteReply> reply, std::shared_ptr<int> votedNum) {
+                           std::shared_ptr<raftRpcProctoc::RequestVoteReply> reply, std::shared_ptr<std::atomic<int>> votedNum) {
   //这个ok是网络是否正常通信的ok，而不是requestVote rpc是否投票的rpc
   // ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
   // todo
@@ -797,10 +797,10 @@ bool Raft::sendRequestVote(int server, std::shared_ptr<raftRpcProctoc::RequestVo
     return true;
   }
 
-  *votedNum = *votedNum + 1;
+  (*votedNum)++;
   if (*votedNum >= m_peers.size() / 2 + 1) {
     //变成leader
-    *votedNum = 0;
+    votedNum->store(0);
     if (m_status == Leader) {
       //如果已经是leader了，那么是就是了，不会进行下一步处理了k
       myAssert(false,
